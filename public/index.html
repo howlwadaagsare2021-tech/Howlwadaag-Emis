@@ -197,8 +197,8 @@
 
 <script>
 (function(){
-  // ⚠️ BADAL kan marka aad backend-ka Railway ku deploy garayso — geli URL-kiisa halkan:
-  const API_BASE_URL = 'https://YOUR-RAILWAY-APP.up.railway.app';
+  // Frontend-ku iyo backend-ku isla Railway service ayay ku wada jiraan, marka waa isla origin-ka - lama badali karo.
+  const API_BASE_URL = '';
 
   const uploadCard = document.getElementById('uploadCard');
   const uploadTitle = document.getElementById('uploadTitle');
@@ -247,10 +247,6 @@
   }
 
   async function loadIndex() {
-    if (API_BASE_URL.includes('YOUR-RAILWAY-APP')) {
-      showBanner('API_BASE_URL weli lama badalin gudaha faylka HTML-ka. Fadlan geli URL-ka backend-ka Railway.', 'error');
-      return;
-    }
     hideBanner();
     try {
       indexList = await api('/api/students/index');
@@ -279,10 +275,6 @@
   async function handleFile(file) {
     hideError();
     if (!file) return;
-    if (API_BASE_URL.includes('YOUR-RAILWAY-APP')) {
-      showError('API_BASE_URL weli lama badalin. Fadlan geli URL-ka backend-ka Railway gudaha faylka.');
-      return;
-    }
     uploadCard.classList.add('busy');
     uploadTitle.textContent = 'Waa la geliyaa xogta…';
     try {
