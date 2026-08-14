@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="so">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lambarka EMIS — Nidaamka Raadinta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F4F6F5;
+    --surface: #FFFFFF;
+    --ink: #16233A;
+    --ink-soft: #5B6B7F;
+    --line: #DDE3E4;
+    --blue: #2F6FBD;
+    --blue-deep: #1B4A85;
+    --gold: #D4A72C;
+    --red: #B4402A;
+    --radius: 14px;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 40px 20px 80px; }
+  header.top {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 28px; flex-wrap: wrap; gap: 10px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 9px;
+    background: linear-gradient(135deg, var(--blue), var(--blue-deep));
+    display: flex; align-items: center; justify-content: center;
+    color: white; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 13px;
+    flex-shrink: 0;
+  }
+  h1 { font-family: 'Space Grotesk', sans-serif; font-size: 21px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  .count-pill {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-soft);
+    background: var(--surface); border: 1px solid var(--line); padding: 5px 12px; border-radius: 100px;
+    display: none;
+  }
+  .status-banner {
+    display: none;
+    font-size: 13px; padding: 10px 14px; border-radius: 10px; margin-bottom: 18px;
+  }
+  .status-banner.error { background: #FDF0EC; border: 1px solid #F3CFC3; color: var(--red); display: block; }
+  .status-banner.info { background: #EEF4FB; border: 1px solid #CFE0F3; color: var(--blue-deep); display: block; }
+
+  .upload-card {
+    background: var(--surface); border: 1.5px dashed var(--line); border-radius: var(--radius);
+    padding: 44px 24px; text-align: center; cursor: pointer;
+    transition: border-color .15s ease, background .15s ease;
+  }
+  .upload-card:hover, .upload-card.drag { border-color: var(--blue); background: #F7FAFD; }
+  .upload-card.busy { cursor: wait; opacity: 0.7; }
+  .upload-card svg { margin-bottom: 14px; }
+  .upload-title { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .upload-sub { font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+  input[type=file] { display: none; }
+  .error-msg {
+    margin-top: 14px; font-size: 13px; color: var(--red);
+    background: #FDF0EC; border: 1px solid #F3CFC3; padding: 10px 14px; border-radius: 10px;
+    text-align: left; display: none;
+  }
+
+  .dashboard { display: none; }
+  .search-shell { position: relative; margin-bottom: 6px; }
+  .search-input {
+    width: 100%; font-family: 'Inter', sans-serif; font-size: 16px;
+    padding: 16px 46px 16px 46px; border-radius: var(--radius);
+    border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+    outline: none; transition: border-color .12s ease, box-shadow .12s ease;
+  }
+  .search-input:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(47,111,189,0.14); }
+  .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: var(--ink-soft); pointer-events: none; }
+  .clear-btn {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--ink-soft); cursor: pointer; padding: 6px;
+    display: none; border-radius: 6px;
+  }
+  .clear-btn:hover { background: var(--bg); }
+
+  .suggest-list {
+    position: absolute; top: calc(100% + 6px); left: 0; right: 0;
+    background: var(--surface); border: 1px solid var(--line); border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(22,35,58,0.10); overflow: hidden; z-index: 20;
+    display: none; max-height: 320px; overflow-y: auto;
+  }
+  .suggest-item {
+    padding: 12px 16px; cursor: pointer; display: flex; align-items: center;
+    justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--bg);
+  }
+  .suggest-item:last-child { border-bottom: none; }
+  .suggest-item:hover, .suggest-item.active { background: #F7FAFD; }
+  .suggest-name { font-size: 14.5px; font-weight: 500; }
+  .suggest-name mark { background: rgba(47,111,189,0.16); color: var(--blue-deep); border-radius: 3px; padding: 0 1px; }
+  .suggest-emis { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-soft); flex-shrink: 0; }
+  .suggest-empty { padding: 18px 16px; font-size: 13.5px; color: var(--ink-soft); }
+
+  .hint { font-size: 12.5px; color: var(--ink-soft); margin: 10px 2px 30px; }
+
+  .result-card {
+    display: none; background: var(--surface); border-radius: 18px; border: 1px solid var(--line);
+    overflow: hidden; animation: rise .28s ease; box-shadow: 0 14px 40px rgba(22,35,58,0.08);
+  }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .card-stripe { height: 8px; background: linear-gradient(90deg, var(--blue) 0%, var(--blue) 60%, var(--gold) 60%, var(--gold) 100%); }
+  .card-body { padding: 26px 26px 22px; }
+  .card-top-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 22px; gap: 12px; }
+  .card-name { font-family: 'Space Grotesk', sans-serif; font-size: 21px; font-weight: 600; line-height: 1.3; }
+  .card-eyebrow { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); margin-bottom: 4px; font-weight: 600; }
+  .emis-badge { flex-shrink: 0; text-align: right; }
+  .emis-badge .emis-eyebrow { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); font-weight: 600; margin-bottom: 4px; }
+  .emis-badge .emis-num {
+    font-family: 'JetBrains Mono', monospace; font-size: 19px; font-weight: 700; color: var(--blue-deep);
+    background: #EEF4FB; padding: 6px 12px; border-radius: 8px; letter-spacing: 0.02em;
+  }
+  .field-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 16px 18px; padding-top: 18px; border-top: 1px dashed var(--line); }
+  .field { display: flex; flex-direction: column; gap: 3px; }
+  .field-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); font-weight: 600; }
+  .field-value { font-size: 14.5px; font-weight: 500; }
+
+  .footer-actions { display: flex; justify-content: flex-end; margin-top: 18px; gap: 16px; }
+  .reset-link { font-size: 12.5px; color: var(--ink-soft); cursor: pointer; background: none; border: none; text-decoration: underline; text-underline-offset: 2px; }
+  .reset-link:hover { color: var(--ink); }
+
+  @media (max-width: 480px) {
+    .wrap { padding: 24px 14px 60px; }
+    .card-top-row { flex-direction: column; }
+    .emis-badge { text-align: left; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="brand">
+      <div class="brand-mark">ID</div>
+      <h1>Lambarka EMIS — Raadinta Ardayda</h1>
+    </div>
+    <span class="count-pill" id="countPill"></span>
+  </header>
+
+  <div class="status-banner" id="statusBanner"></div>
+
+  <div class="upload-card" id="uploadCard">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#2F6FBD" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+    <div class="upload-title" id="uploadTitle">Halkan ku dhig faylka xogta ardayda</div>
+    <div class="upload-sub">.xlsx, .xls ama .csv — waa inuu ka kooban yahay Magaca ardayga iyo Lambarka EMIS<br>Riix ama jiid faylka halkan</div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <div class="dashboard" id="dashboard">
+    <div class="search-shell">
+      <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" class="search-input" id="searchInput" placeholder="Qor magaca ardayga…" autocomplete="off">
+      <button class="clear-btn" id="clearBtn" title="Nadiifi">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+      <div class="suggest-list" id="suggestList"></div>
+    </div>
+    <div class="hint">Bilaw inaad qorto magaca — liiska soo jeediska ah wuu soo baxayaa si aad u doorato ka hor intaadan dhammaystirin. Xogtani waxay ku kaydsan tahay server, waana ay sii jirtaa mar kasta oo dib loo furo.</div>
+
+    <div class="result-card" id="resultCard">
+      <div class="card-stripe"></div>
+      <div class="card-body">
+        <div class="card-top-row">
+          <div>
+            <div class="card-eyebrow">Ardayga</div>
+            <div class="card-name" id="rName">—</div>
+          </div>
+          <div class="emis-badge">
+            <div class="emis-eyebrow">Lambarka EMIS</div>
+            <div class="emis-num" id="rEmis">—</div>
+          </div>
+        </div>
+        <div class="field-grid" id="fieldGrid"></div>
+      </div>
+    </div>
+
+    <div class="footer-actions">
+      <button class="reset-link" id="reloadBtn">Cusbooneysii liiska</button>
+      <button class="reset-link" id="resetBtn">Tirtir dhammaan &amp; fayl kale soo geli</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // ⚠️ BADAL kan marka aad backend-ka Railway ku deploy garayso — geli URL-kiisa halkan:
+  const API_BASE_URL = 'https://YOUR-RAILWAY-APP.up.railway.app';
+
+  const uploadCard = document.getElementById('uploadCard');
+  const uploadTitle = document.getElementById('uploadTitle');
+  const fileInput = document.getElementById('fileInput');
+  const errorMsg = document.getElementById('errorMsg');
+  const statusBanner = document.getElementById('statusBanner');
+  const dashboard = document.getElementById('dashboard');
+  const countPill = document.getElementById('countPill');
+  const searchInput = document.getElementById('searchInput');
+  const clearBtn = document.getElementById('clearBtn');
+  const suggestList = document.getElementById('suggestList');
+  const resultCard = document.getElementById('resultCard');
+  const rName = document.getElementById('rName');
+  const rEmis = document.getElementById('rEmis');
+  const fieldGrid = document.getElementById('fieldGrid');
+  const resetBtn = document.getElementById('resetBtn');
+  const reloadBtn = document.getElementById('reloadBtn');
+
+  let indexList = [];   // [{id, name, emis}]
+  let activeIndex = -1;
+  let currentMatches = [];
+
+  function showBanner(msg, type) {
+    statusBanner.textContent = msg;
+    statusBanner.className = 'status-banner ' + type;
+  }
+  function hideBanner() {
+    statusBanner.className = 'status-banner';
+  }
+  function showError(msg) {
+    errorMsg.textContent = msg;
+    errorMsg.style.display = 'block';
+  }
+  function hideError() {
+    errorMsg.style.display = 'none';
+  }
+
+  async function api(path, options) {
+    const res = await fetch(API_BASE_URL + path, options);
+    if (!res.ok) {
+      let msg = 'Khalad server ah (' + res.status + ')';
+      try { const j = await res.json(); if (j.error) msg = j.error; } catch(e) {}
+      throw new Error(msg);
+    }
+    return res.json();
+  }
+
+  async function loadIndex() {
+    if (API_BASE_URL.includes('YOUR-RAILWAY-APP')) {
+      showBanner('API_BASE_URL weli lama badalin gudaha faylka HTML-ka. Fadlan geli URL-ka backend-ka Railway.', 'error');
+      return;
+    }
+    hideBanner();
+    try {
+      indexList = await api('/api/students/index');
+      if (indexList.length) {
+        uploadCard.style.display = 'none';
+        dashboard.style.display = 'block';
+        countPill.style.display = 'inline-block';
+        countPill.textContent = indexList.length + ' arday oo diyaar ah';
+      } else {
+        uploadCard.style.display = 'block';
+        dashboard.style.display = 'none';
+        countPill.style.display = 'none';
+      }
+    } catch (err) {
+      showBanner('Ma la xidhiidhi karin server-ka. Hubi in backend-ku shaqeeyo iyo in API_BASE_URL sax yahay.', 'error');
+    }
+  }
+
+  uploadCard.addEventListener('click', () => { if (!uploadCard.classList.contains('busy')) fileInput.click(); });
+  fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+  ['dragover', 'dragenter'].forEach(evt => uploadCard.addEventListener(evt, (e) => { e.preventDefault(); uploadCard.classList.add('drag'); }));
+  ['dragleave', 'dragend', 'drop'].forEach(evt => uploadCard.addEventListener(evt, () => uploadCard.classList.remove('drag')));
+  uploadCard.addEventListener('drop', (e) => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) handleFile(f); });
+
+  async function handleFile(file) {
+    hideError();
+    if (!file) return;
+    if (API_BASE_URL.includes('YOUR-RAILWAY-APP')) {
+      showError('API_BASE_URL weli lama badalin. Fadlan geli URL-ka backend-ka Railway gudaha faylka.');
+      return;
+    }
+    uploadCard.classList.add('busy');
+    uploadTitle.textContent = 'Waa la geliyaa xogta…';
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      const result = await api('/api/upload', { method: 'POST', body: fd });
+      uploadTitle.textContent = 'Halkan ku dhig faylka xogta ardayda';
+      uploadCard.classList.remove('busy');
+      fileInput.value = '';
+      await loadIndex();
+    } catch (err) {
+      uploadCard.classList.remove('busy');
+      uploadTitle.textContent = 'Halkan ku dhig faylka xogta ardayda';
+      showError(err.message || 'Faylka lama akhrin karin. Hubi qaabka faylka.');
+    }
+  }
+
+  function highlight(text, query) {
+    if (!query) return text;
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return text;
+    return text.slice(0, idx) + '<mark>' + text.slice(idx, idx + query.length) + '</mark>' + text.slice(idx + query.length);
+  }
+
+  function renderSuggestions(query) {
+    const q = query.trim().toLowerCase();
+    if (!q) { suggestList.style.display = 'none'; currentMatches = []; activeIndex = -1; return; }
+
+    const starts = [], contains = [];
+    for (const r of indexList) {
+      const n = r.name.toLowerCase();
+      if (n.startsWith(q)) starts.push(r);
+      else if (n.includes(q)) contains.push(r);
+    }
+    currentMatches = starts.concat(contains).slice(0, 8);
+    activeIndex = -1;
+
+    if (!currentMatches.length) {
+      suggestList.innerHTML = '<div class="suggest-empty">Lama helin arday magaciisu la mid yahay “' + query.trim() + '”</div>';
+      suggestList.style.display = 'block';
+      return;
+    }
+
+    suggestList.innerHTML = currentMatches.map((r, i) =>
+      '<div class="suggest-item" data-index="' + i + '">' +
+        '<span class="suggest-name">' + highlight(r.name, query.trim()) + '</span>' +
+        '<span class="suggest-emis">' + (r.emis || '—') + '</span>' +
+      '</div>'
+    ).join('');
+    suggestList.style.display = 'block';
+
+    Array.from(suggestList.querySelectorAll('.suggest-item')).forEach(el => {
+      el.addEventListener('click', () => {
+        const i = parseInt(el.getAttribute('data-index'), 10);
+        selectRecord(currentMatches[i]);
+      });
+    });
+  }
+
+  async function selectRecord(item) {
+    searchInput.value = item.name;
+    suggestList.style.display = 'none';
+    clearBtn.style.display = 'block';
+    try {
+      const full = await api('/api/students/' + item.id);
+      rName.textContent = full.name;
+      rEmis.textContent = full.emis || '—';
+      const extra = full.extra || {};
+      fieldGrid.innerHTML = Object.entries(extra)
+        .filter(([k, v]) => String(v).trim() !== '')
+        .map(([k, v]) => '<div class="field"><span class="field-label">' + k + '</span><span class="field-value">' + v + '</span></div>')
+        .join('');
+      resultCard.style.display = 'block';
+    } catch (err) {
+      showBanner('Faalka ardayga lama soo saari karin. Isku day mar kale.', 'error');
+    }
+  }
+
+  searchInput.addEventListener('input', () => {
+    clearBtn.style.display = searchInput.value ? 'block' : 'none';
+    if (searchInput.value.trim() === '') resultCard.style.display = 'none';
+    renderSuggestions(searchInput.value);
+  });
+
+  searchInput.addEventListener('keydown', (e) => {
+    if (suggestList.style.display !== 'block' || !currentMatches.length) return;
+    const items = suggestList.querySelectorAll('.suggest-item');
+    if (e.key === 'ArrowDown') { e.preventDefault(); activeIndex = Math.min(activeIndex + 1, currentMatches.length - 1); updateActive(items); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); activeIndex = Math.max(activeIndex - 1, 0); updateActive(items); }
+    else if (e.key === 'Enter') { e.preventDefault(); if (activeIndex >= 0) selectRecord(currentMatches[activeIndex]); else if (currentMatches.length === 1) selectRecord(currentMatches[0]); }
+    else if (e.key === 'Escape') { suggestList.style.display = 'none'; }
+  });
+
+  function updateActive(items) {
+    items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+    if (items[activeIndex]) items[activeIndex].scrollIntoView({ block: 'nearest' });
+  }
+
+  clearBtn.addEventListener('click', () => {
+    searchInput.value = '';
+    clearBtn.style.display = 'none';
+    suggestList.style.display = 'none';
+    resultCard.style.display = 'none';
+    searchInput.focus();
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.search-shell')) suggestList.style.display = 'none';
+  });
+
+  reloadBtn.addEventListener('click', loadIndex);
+
+  resetBtn.addEventListener('click', async () => {
+    if (!confirm('Ma hubtaa inaad tirtirto dhammaan xogta ardayda ee kaydsan? Tallaabadan lama celin karo.')) return;
+    try {
+      await api('/api/students', { method: 'DELETE' });
+      indexList = [];
+      fileInput.value = '';
+      dashboard.style.display = 'none';
+      countPill.style.display = 'none';
+      resultCard.style.display = 'none';
+      searchInput.value = '';
+      uploadCard.style.display = 'block';
+      hideError();
+      hideBanner();
+    } catch (err) {
+      showBanner('Xogta lama tirtiri karin. Isku day mar kale.', 'error');
+    }
+  });
+
+  loadIndex();
+})();
+</script>
+</body>
+</html>
