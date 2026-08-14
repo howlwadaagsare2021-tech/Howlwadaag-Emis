@@ -14,6 +14,7 @@ const pool = new Pool({
 
 app.use(cors());
 app.use(express.json());
+app.use(express.static('public'));
 
 const NAME_HINTS = ['magac', 'name', 'magaca', 'student name', 'full name'];
 const EMIS_HINTS = ['emis', 'lambarka emis', 'emis number', 'emis no', 'emis id'];
